@@ -159,7 +159,7 @@ def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
     nu = Nubank()
     nu.authenticate_with_cert(cpf, senha, certificado)
     debito = nu.get_account_balance()
-    perfil = nu.get_customer()
+    # perfil = nu.get_customer()
     info_card = nu.get_credit_card_balance()
     
     limite_disponivel = info_card.get('available', 'Limite disponivel não encontrado')
@@ -170,7 +170,7 @@ def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
     
     proximas_faturas = info_card.get('future', 'Fatura atual não encontrado')
     
-    return {"Saldo": debito ,"dados": perfil,"limitedisponivel": limite_disponivel,
+    return {"Saldo": debito ,"limitedisponivel": limite_disponivel,
             "faturaatual": fatura_atual,
             "proximasfaturas": proximas_faturas, 
             }
