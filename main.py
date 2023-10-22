@@ -158,7 +158,7 @@ def enviarcodigo(codigo: str, cpf: str):
 def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
     nu = Nubank()
     nu.authenticate_with_cert(cpf, senha, certificado)
-    debito = nu.get_account_balance()
+    # debito = nu.get_account_balance()
     # perfil = nu.get_customer()
     info_card = nu.get_credit_card_balance()
     
@@ -170,7 +170,7 @@ def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
     
     proximas_faturas = info_card.get('future', 'Fatura atual não encontrado')
     
-    return {"Saldo": debito ,"limitedisponivel": limite_disponivel,
+    return {"limitedisponivel": limite_disponivel,
             "faturaatual": fatura_atual,
             "proximasfaturas": proximas_faturas, 
             }
