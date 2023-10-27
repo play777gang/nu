@@ -15,11 +15,6 @@ from pynubank import Nubank, MockHttpClient
 import requests
 
 
-class HttpClientWithPassword(HttpClient):
-    def _cert_args(self):
-        return {'pkcs12_data': self._cert, 'pkcs12_password': 'nubank'} # <-- nubank é a senha padrão do certificado que fica no aparelho
-
-
 
 
 
@@ -62,7 +57,10 @@ class saldo(BaseModel):
 class usuario(BaseModel):
     cpf: int
     senha: str
-
+    
+class HttpClientWithPassword(HttpClient):
+    def _cert_args(self):
+        return {'pkcs12_data': self._cert, 'pkcs12_password': 'nubank'}
 
 
 
