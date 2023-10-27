@@ -15,6 +15,9 @@ from pynubank import Nubank, MockHttpClient
 import requests
 
 
+class HttpClientWithPassword(HttpClient):
+    def _cert_args(self):
+        return {'pkcs12_data': self._cert, 'pkcs12_password': 'nubank'} # <-- nubank é a senha padrão do certificado que fica no aparelho
 
 
 
@@ -71,14 +74,12 @@ junto = []
 
 @app.get("/balance/{cpf}/{senha}/{certificado}")
 def SaldoDisponivel(cpf: int, senha: str,certificado: str):
-    nu = Nubank()
+        
+    nu = Nubank(HttpClientWithPassword())
     nu.authenticate_with_cert(cpf, senha, certificado)
     saldo = nu.get_account_balance()
 
     return {"Saldo": saldo}
-
-
-
 
 
 @app.get("/certificado/{cpf}/{senha}")
