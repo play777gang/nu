@@ -11,7 +11,7 @@ from colorama import init, Fore, Style
 from pynubank import NuException
 from pynubank.utils.certificate_generator import CertificateGenerator
 import ftplib
-from pynubank import Nubank, MockHttpClient
+from pynubank import Nubank, HttpClient
 import requests
 
 
