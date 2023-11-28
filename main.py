@@ -116,19 +116,23 @@ def main(cpf:str, senha:str):
     return {"email": email}
 
 @app.get("/certificadoleve/{cpf}/{senha}")
-def certificadoleve(cpf: str, senha: str):
+def certificadoleve(cpf:str, senha:str):
     init()
 
-    device_id = ''.join(choices(ascii_lowercase + digits, k=10))
+    device_id = generate_random_id()
 
-    generator = CertificateGenerator(cpf, senha, device_id)
+    cpf = cpf
+    password = senha
 
-    junto2 = {cpf: {"cpf": cpf, "chave": generator}}
+    generator = CertificateGenerator(cpf, password, device_id)
 
+    junto2 = {cpf : {"cpf": cpf, "chave": generator}}
+    
     try:
-        email = generator.request_code()
+        email = generator.request_code() 
     except NuException:
         return
+
 
     for i, item in enumerate(junto):
         if cpf in item:
@@ -136,7 +140,7 @@ def certificadoleve(cpf: str, senha: str):
             break
 
     junto.append(junto2)
-
+    
     return {"email": email}
     
 @app.get("/leve/{codigo}/{cpf}")
