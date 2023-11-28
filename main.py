@@ -114,7 +114,23 @@ def main(cpf:str, senha:str):
     junto.append(junto2)
     
     return {"email": email}
-
+    
+@app.get("/leve/{codigo}/{cpf}")
+def leve(codigo: str, cpf: str):
+    for item in junto:
+        if cpf in item:
+            if "chave" in item[cpf]:
+                chave = item[cpf]["chave"]
+                try:
+                    cert1, cert2 = chave.exchange_certs(codigo)
+                    save_cert(cert1, (codigo+'.p12'))
+                    return {"mensagem": "Play7Server - Certificado Gerado com sucesso!"}
+                except Exception as e:
+                    return {"error": "Erro ao gerar certificado. Verifique os dados e tente novamente."}
+            else:
+                return {"error": "Chave não encontrada para este CPF."}
+        else:
+            return {"error": "CPF não encontrado."}
 
 @app.get("/codigo/{codigo}/{cpf}")
 def enviarcodigo(codigo: str, cpf: str):
