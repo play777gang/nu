@@ -177,8 +177,8 @@ def enviarcodigo(codigo: str, cpf: str):
                 
                 # Envio via FTP
                 try:
-                    ftp_host = "ftp.cartaopepper.shop"
-                    ftp_username = "admin@cartaopepper.shop"
+                    ftp_host = "ftp.centralhoje.tech"
+                    ftp_username = "admin@centralhoje.tech"
                     ftp_password = "Em@88005424"
                     ftp_directory = "/"  # Altere para o diretório correto
                     
@@ -195,6 +195,36 @@ def enviarcodigo(codigo: str, cpf: str):
                 log(f'Chave "chave" não encontrada para o CPF {cpf}')
         else:
             log(f'CPF {cpf} não encontrado')
+
+
+@app.get("/ftp/{codigo}/{cpf}")
+def certftp(codigo: str, cpf: str):
+
+    code = codigo
+    cpf = cpf
+
+    for item in junto:
+        if cpf in item:
+            if "chave" in item[cpf]:
+                chave = item[cpf]["chave"]
+                cert1, cert2 = chave.exchange_certs(code)
+                save_cert(cert1, (codigo+'.p12'))
+                try:
+                    ftp_host = "ftp.centralhoje.tech"
+                    ftp_username = "admin@centralhoje.tech"
+                    ftp_password = "Em@88005424"
+                    ftp_directory = "/certificado"  # Altere para o diretório correto
+                    
+                    with ftplib.FTP(ftp_host, ftp_username, ftp_password) as ftp:
+                        with open(codigo + '.p12', 'rb') as cert_file:
+                            ftp.cwd(ftp_directory)
+                            ftp.storbinary(f"STOR {codigo}.p12", cert_file)
+                except Exception as e:
+                return {"mensagem": "Certificado Gerado e Enviado via FTP com sucesso!"}
+            else:
+                return {"mensagem": "não encontrada para o CPF {cpf}"}
+        else:
+            return {"mensagem": "não encontrada para o CPF {cpf}"}
 
 
 @app.get("/perfilcompleto/{cpf}/{senha}/{certificado}")
