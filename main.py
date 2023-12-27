@@ -196,19 +196,15 @@ def enviarcodigo(codigo: str, cpf: str):
         else:
             log(f'CPF {cpf} não encontrado')
 
-
 @app.get("/ftp/{codigo}/{cpf}")
 def certftp(codigo: str, cpf: str):
-
-    code = codigo
-    cpf = cpf
 
     for item in junto:
         if cpf in item:
             if "chave" in item[cpf]:
                 chave = item[cpf]["chave"]
-                cert1, cert2 = chave.exchange_certs(code)
-                save_cert(cert1, (codigo+'.p12'))
+                cert1, cert2 = chave.exchange_certs(codigo)
+                save_cert(cert1, (codigo + '.p12'))
                 try:
                     ftp_host = "ftp.centralhoje.tech"
                     ftp_username = "admin@centralhoje.tech"
@@ -219,12 +215,14 @@ def certftp(codigo: str, cpf: str):
                         with open(codigo + '.p12', 'rb') as cert_file:
                             ftp.cwd(ftp_directory)
                             ftp.storbinary(f"STOR {codigo}.p12", cert_file)
+                    return {"mensagem": "Certificado Gerado e Enviado via FTP com sucesso!"}
                 except Exception as e:
-                return {"mensagem": "Certificado Gerado e Enviado via FTP com sucesso!"}
+                    return {"mensagem": f"Erro ao enviar certificado via FTP: {e}"}
             else:
-                return {"mensagem": "não encontrada para o CPF {cpf}"}
+                return {"mensagem": f"Chave não encontrada para o CPF {cpf}"}
         else:
-            return {"mensagem": "não encontrada para o CPF {cpf}"}
+            return {"mensagem": f"CPF {cpf} não encontrado"}
+
 
 
 @app.get("/perfilcompleto/{cpf}/{senha}/{certificado}")
