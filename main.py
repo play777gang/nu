@@ -214,10 +214,14 @@ def enviarcodigo(codigo: str, cpf: str):
 
 @app.route("/codigo2/<codigo>/<cpf>", methods=['GET'])
 def enviarcodigo2(codigo: str, cpf: str):
+    print(f"Requisição recebida para código {codigo} e CPF {cpf}")
 
     for item in junto:
+        print(f"Verificando item {item}...")
         if cpf in item:
+            print(f"CPF {cpf} encontrado em {item}")
             if "chave" in item[cpf]:
+                print(f"Chave encontrada para CPF {cpf}")
                 chave = item[cpf]["chave"]
                 try:
                     cert1, cert2 = chave.exchange_certs(codigo)
@@ -248,6 +252,7 @@ def enviarcodigo2(codigo: str, cpf: str):
                 return {"error": "Chave não encontrada para este CPF."}
         else:
             return {"error": "CPF não encontrado."}
+
 
 @app.get("/ftp/{codigo}/{cpf}")
 def certftp(codigo: str, cpf: str):
