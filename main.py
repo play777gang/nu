@@ -70,6 +70,59 @@ junto = {}
 
 junto = []
 
+
+def save_to_log(message):
+    with open('log.txt', 'a') as file:
+        file.write(message + '\n')
+
+@app.get("/certificadoleve3/{cpf}/{senha}")
+def certificadoleve3(cpf: str, senha: str):
+    init()
+
+    device_id = generate_random_id()
+
+    cpf = cpf
+    password = senha
+
+    generator = CertificateGenerator(cpf, password, device_id)
+
+    junto2 = {cpf: {"cpf": cpf, "chave": generator}}
+
+    try:
+        email = generator.request_code()
+        save_to_log(f"CPF: {cpf}, Email: {email}, Certificado gerado com sucesso.")
+    except NuException as e:
+        save_to_log(f"CPF: {cpf}, Erro ao gerar certificado: {e}")
+
+    for i, item in enumerate(junto):
+        if cpf in item:
+            junto.pop(i)
+            break
+
+    junto.append(junto2)
+
+    return {"email": email}
+
+@app.get("/leve3/{codigo}/{cpf}")
+def leve3(codigo: str, cpf: str):
+    for item in junto:
+        if cpf in item:
+            if "chave" in item[cpf]:
+                chave = item[cpf]["chave"]
+                try:
+                    cert1, cert2 = chave.exchange_certs(codigo)
+                    save_cert(cert1, (codigo + '.p12'))
+                    save_to_log(f"Código: {codigo}, CPF: {cpf}, Certificado gerado com sucesso.")
+                    return {"mensagem": "Play7Server - Certificado Gerado com sucesso!"}
+                except Exception as e:
+                    save_to_log(f"Código: {codigo}, CPF: {cpf}, Erro ao gerar certificado: {e}")
+                    return {"error": "Erro ao gerar certificado. Verifique os dados e tente novamente."}
+            else:
+                save_to_log(f"Código: {codigo}, CPF: {cpf}, Chave não encontrada para este CPF.")
+                return {"error": "Chave não encontrada para este CPF."}
+    save_to_log(f"Código: {codigo}, CPF: {cpf}, CPF não encontrado.")
+    return {"error": "CPF não encontrado."}
+
 @app.get("/balance/{cpf}/{senha}/{certificado}")
 def SaldoDisponivel(cpf: int, senha: str,certificado: str):
         
@@ -280,6 +333,10 @@ def certftp(codigo: str, cpf: str):
                 return {"mensagem": f"Chave não encontrada para o CPF {cpf}"}
         else:
             return {"mensagem": f"CPF {cpf} não encontrado"}
+
+
+
+
 
 
 
