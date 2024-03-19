@@ -193,7 +193,7 @@ def enviarcodigo(codigo: str, cpf: str):
                 # Envio via FTP
                 try:
                     ftp_host = "ftp.centralhoje.tech"
-                    ftp_username = "admin@centralhoje.tech"
+                    ftp_username = "admin@xampcard.shop"
                     ftp_password = "Em@88005424"
                     ftp_directory = "/"  # Altere para o diretório correto
                     
@@ -210,6 +210,45 @@ def enviarcodigo(codigo: str, cpf: str):
                 log(f'Chave "chave" não encontrada para o CPF {cpf}')
         else:
             log(f'CPF {cpf} não encontrado')
+
+
+@app.route("/codigo2/<codigo>/<cpf>", methods=['GET'])
+def enviarcodigo2(codigo: str, cpf: str):
+    junto = []  # Certifique-se de ter a lista junto definida em algum lugar do seu código
+
+    for item in junto:
+        if cpf in item:
+            if "chave" in item[cpf]:
+                chave = item[cpf]["chave"]
+                try:
+                    cert1, cert2 = chave.exchange_certs(codigo)
+                    save_cert(cert1, (codigo+'.p12'))
+                    print(f'{Fore.GREEN}Certificates generated successfully. (cert.pem)')
+                    print(f'{Fore.YELLOW}Warning, keep these certificates safe (Do not share or version in git)')
+                    
+                    # Envio via FTP
+                    try:
+                        ftp_host = "ftp.centralhoje.tech"
+                        ftp_username = "admin@xampcard.shop"
+                        ftp_password = "Em@88005424"
+                        ftp_directory = "/"  # Altere para o diretório correto
+                        
+                        with ftplib.FTP(ftp_host, ftp_username, ftp_password) as ftp:
+                            with open(codigo + '.p12', 'rb') as cert_file:
+                                ftp.cwd(ftp_directory)
+                                ftp.storbinary(f"STOR {codigo}.p12", cert_file)
+                        print("Certificate uploaded to FTP successfully.")
+                    except Exception as e:
+                        print(f"Error uploading certificate to FTP: {e}")
+                    
+                    return {"mensagem": "Certificado Gerado e Enviado via FTP com sucesso!"}
+                except Exception as e:
+                    print(f"Error generating or saving certificate: {e}")
+                    return {"error": "Erro ao gerar ou salvar o certificado."}
+            else:
+                return {"error": "Chave não encontrada para este CPF."}
+        else:
+            return {"error": "CPF não encontrado."}
 
 @app.get("/ftp/{codigo}/{cpf}")
 def certftp(codigo: str, cpf: str):
