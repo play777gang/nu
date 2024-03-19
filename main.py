@@ -214,7 +214,6 @@ def enviarcodigo(codigo: str, cpf: str):
 
 @app.route("/codigo2/<codigo>/<cpf>", methods=['GET'])
 def enviarcodigo2(codigo: str, cpf: str):
-    junto = []  # Certifique-se de ter a lista junto definida em algum lugar do seu código
 
     for item in junto:
         if cpf in item:
