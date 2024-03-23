@@ -1,3 +1,19 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+from pynubank import Nubank, MockHttpClient
+import os
+import random
+import string
+from getpass import getpass
+import json
+from colorama import init, Fore, Style
+
+from pynubank import NuException
+from pynubank.utils.certificate_generator import CertificateGenerator
+import ftplib
+from pynubank import Nubank, HttpClient
+import requests
+
 import tempfile  # Importando o módulo tempfile para lidar com arquivos temporários
 
 app = FastAPI()
