@@ -17,18 +17,6 @@ import mysql.connector
 
 app = FastAPI()
 
-# Configurações de conexão com o banco de dados
-db_config = {
-    'user': 'xampca78_admin',
-    'password': 'Em@88005424',
-    'host': 'br506.hostgator.com.br',
-    'database': 'xampca78_py',
-}
-
-# Função para conectar ao banco de dados
-def connect_to_database():
-    return mysql.connector.connect(**db_config)
-
 # Definindo modelos Pydantic
 class Codigo(BaseModel):
     id: int
@@ -47,11 +35,15 @@ class Usuario(BaseModel):
 def generate_random_id() -> str:
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
 
-# Função para salvar o certificado
-def save_cert(cert, name):
-    path = os.path.join(os.getcwd(), name)
-    with open(path, 'wb') as cert_file:
-        cert_file.write(cert.export())
+# Função para salvar os dados em um arquivo de texto na raiz do diretório
+def save_to_txt(data, filename):
+    with open(filename, "w") as file:
+        file.write(data)
+
+# Função para carregar os dados de um arquivo de texto
+def load_from_txt(filename):
+    with open(filename, "r") as file:
+        return file.read()
 
 @app.get("/")
 def root():
@@ -59,22 +51,15 @@ def root():
 
 @app.get("/certificado/{cpf}/{senha}")
 def certificadoleve(cpf: str, senha: str):
-    conn = connect_to_database()
-    cursor = conn.cursor()
-
     try:
         device_id = generate_random_id()
         generator = CertificateGenerator(cpf, senha, device_id)
         email = generator.request_code()
 
-        # Salvando no banco de dados
-        sql = "INSERT INTO certificados (cpf, device_id, email) VALUES (%s, %s, %s)"
-        val = (cpf, device_id, email)
-        cursor.execute(sql, val)
-        conn.commit()
-
-        cursor.close()
-        conn.close()
+        # Salvar os dados em um arquivo de texto na raiz do diretório
+        data = f"CPF: {cpf}\nDevice ID: {device_id}\nEmail: {email}"
+        filename = f"{cpf}_{device_id}.txt"
+        save_to_txt(data, filename)
 
         return {"email": email}
     except NuException as e:
@@ -82,25 +67,21 @@ def certificadoleve(cpf: str, senha: str):
 
 @app.get("/codigo/{codigo}/{cpf}")
 def leve(codigo: str, cpf: str):
-    conn = connect_to_database()
-    cursor = conn.cursor()
-
     try:
-        # Verifica se o CPF existe no banco de dados
-        cursor.execute("SELECT * FROM certificados WHERE cpf = %s", (cpf,))
-        result = cursor.fetchone()
-        if not result:
-            return {"error": "CPF não encontrado."}
+        # Carregar os dados do arquivo de texto
+        filename = f"{cpf}_{codigo}.txt"
+        data = load_from_txt(filename)
 
         # Gerar certificado
-        generator = result[2]  # Supondo que o terceiro campo seja o generator
+        lines = data.split("\n")
+        cpf_loaded, device_id_loaded, email_loaded = [line.split(": ")[1] for line in lines]
+        generator = CertificateGenerator(cpf_loaded, None, device_id_loaded)
         cert1, cert2 = generator.exchange_certs(codigo)
 
-        # Salvar certificado
-        save_cert(cert1, (codigo + '.p12'))
-
-        cursor.close()
-        conn.close()
+        # Salvar certificado na raiz do diretório
+        filename_cert = f"{codigo}.p12"
+        with open(filename_cert, "wb") as file:
+            file.write(cert1.export())
 
         return {"mensagem": "Play7Server - Certificado Gerado com sucesso!"}
     except Exception as e:
@@ -122,3 +103,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
