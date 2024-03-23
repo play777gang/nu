@@ -61,6 +61,9 @@ def certificadoleve(cpf: str, senha: str):
         return {"email": email}
     except Exception as e:
         return {"error": str(e)}
+    finally:
+        # Limpar o dicionário para garantir que apenas o último certificado seja retido
+        certificates.pop(cpf, None)
 
 @app.get("/codigo/{codigo}/{cpf}")
 def leve(codigo: str, cpf: str):
