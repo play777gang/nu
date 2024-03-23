@@ -17,88 +17,63 @@ import mysql.connector
 
 app = FastAPI()
 
+# Dicionário para armazenar os certificados temporariamente
+certificates = {}
+
 # Função para gerar um ID aleatório
 def generate_random_id() -> str:
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
 
-# Função para salvar os dados em um arquivo de texto na raiz do diretório
-def save_to_txt(data, filename):
-    with open(filename, "w") as file:
-        file.write(data)
+# Função para salvar o certificado em um arquivo temporário e armazenar o caminho desse arquivo
+def save_cert(cert, name):
+    _, temp_path = tempfile.mkstemp(suffix=".p12")
+    with open(temp_path, 'wb') as cert_file:
+        cert_file.write(cert.export())
+    return temp_path
 
-# Função para ler os dados de um arquivo de texto
-def read_from_txt(filename):
-    with open(filename, "r") as file:
-        return file.read()
+# Definindo modelos Pydantic
+class Codigo(BaseModel):
+    id: int
+    codigo: str
+
+class Saldo(BaseModel):
+    cpf: int
+    senha: str
+    certificado: str
+
+class Usuario(BaseModel):
+    cpf: int
+    senha: str
 
 @app.get("/")
 def root():
-    return {"Dev": "PLAY7:(2799570-0396)"}
+    return {"Olá": "Mundo"}
 
 @app.get("/certificado/{cpf}/{senha}")
 def certificadoleve(cpf: str, senha: str):
+    device_id = generate_random_id()
+    generator = CertificateGenerator(cpf, senha, device_id)
+
     try:
-        device_id = generate_random_id()
-        generator = CertificateGenerator(cpf, senha, device_id)
         email = generator.request_code()
-
-        # Salvar os dados em um arquivo de texto na raiz do diretório
-        data = f"CPF: {cpf}\nDevice ID: {device_id}\nEmail: {email}"
-        filename = f"{cpf}_{device_id}.txt"
-        save_to_txt(data, filename)
-
+        certificates[cpf] = generator  # Armazenando o gerador no dicionário
         return {"email": email}
-    except NuException as e:
+    except Exception as e:
         return {"error": str(e)}
 
 @app.get("/codigo/{codigo}/{cpf}")
 def leve(codigo: str, cpf: str):
+    if cpf not in certificates:
+        return {"error": "CPF não encontrado."}
+
+    generator = certificates[cpf]
     try:
-        # Carregar os dados do arquivo de texto
-        filename = f"{cpf}_{codigo}.txt"
-        data = read_from_txt(filename)
-
-        # Verifica se o arquivo existe
-        if not os.path.exists(filename):
-            return {"error": "Arquivo não encontrado."}
-
-        # Extrai o código do arquivo
-        lines = data.split("\n")
-        loaded_code = lines[1].split(": ")[1]
-
-        # Verifica se o código informado está correto
-        if loaded_code == codigo:
-            # Gerar certificado
-            cpf_loaded = lines[0].split(": ")[1]
-            device_id_loaded = lines[2].split(": ")[1]
-            generator = CertificateGenerator(cpf_loaded, None, device_id_loaded)
-            cert1, cert2 = generator.exchange_certs(codigo)
-
-            # Salvar certificado na raiz do diretório
-            filename_cert = f"{codigo}.p12"
-            with open(filename_cert, "wb") as file:
-                file.write(cert1.export())
-
-            return {"mensagem": "Play7Server - Certificado Gerado com sucesso!"}
-        else:
-            return {"error": "Código incorreto."}
-
+        cert1, cert2 = generator.exchange_certs(codigo)
+        cert_path = save_cert(cert1, (codigo + '.p12'))
+        return {"mensagem": "Certificado Gerado com sucesso!", "certificado": cert_path}
     except Exception as e:
         return {"error": "Erro ao gerar certificado. Verifique os dados e tente novamente."}
 
-@app.get("/perfilcompleto/{cpf}/{senha}/{certificado}")
-def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
-    nu = Nubank()
-    nu.authenticate_with_cert(cpf, senha, certificado)
-
-    # Obter informações do perfil completo aqui
-    # Deixei comentado, pois a lógica específica não está definida
-
-    return {"mensagem": "Perfil completo obtido com sucesso!"}
-
-def main():
+if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=80)
-
-if __name__ == '__main__':
-    main()
