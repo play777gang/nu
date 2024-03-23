@@ -145,8 +145,9 @@ def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
 
 @app.get("/teste/{cpf}/{senha}/{certificado}")
 def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
+     nu = Nubank()
     # Retorna a documentação de ajuda da biblioteca nubank
-    return {"help": help(Nubank)}
+    return {"help": help(nu)}
 
 
 
