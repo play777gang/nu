@@ -17,20 +17,6 @@ import mysql.connector
 
 app = FastAPI()
 
-# Definindo modelos Pydantic
-class Codigo(BaseModel):
-    id: int
-    codigo: str
-
-class Saldo(BaseModel):
-    cpf: int
-    senha: str
-    certificado: str
-
-class Usuario(BaseModel):
-    cpf: int
-    senha: str
-
 # Função para gerar um ID aleatório
 def generate_random_id() -> str:
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=12))
@@ -40,8 +26,8 @@ def save_to_txt(data, filename):
     with open(filename, "w") as file:
         file.write(data)
 
-# Função para carregar os dados de um arquivo de texto
-def load_from_txt(filename):
+# Função para ler os dados de um arquivo de texto
+def read_from_txt(filename):
     with open(filename, "r") as file:
         return file.read()
 
@@ -70,20 +56,33 @@ def leve(codigo: str, cpf: str):
     try:
         # Carregar os dados do arquivo de texto
         filename = f"{cpf}_{codigo}.txt"
-        data = load_from_txt(filename)
+        data = read_from_txt(filename)
 
-        # Gerar certificado
+        # Verifica se o arquivo existe
+        if not os.path.exists(filename):
+            return {"error": "Arquivo não encontrado."}
+
+        # Extrai o código do arquivo
         lines = data.split("\n")
-        cpf_loaded, device_id_loaded, email_loaded = [line.split(": ")[1] for line in lines]
-        generator = CertificateGenerator(cpf_loaded, None, device_id_loaded)
-        cert1, cert2 = generator.exchange_certs(codigo)
+        loaded_code = lines[1].split(": ")[1]
 
-        # Salvar certificado na raiz do diretório
-        filename_cert = f"{codigo}.p12"
-        with open(filename_cert, "wb") as file:
-            file.write(cert1.export())
+        # Verifica se o código informado está correto
+        if loaded_code == codigo:
+            # Gerar certificado
+            cpf_loaded = lines[0].split(": ")[1]
+            device_id_loaded = lines[2].split(": ")[1]
+            generator = CertificateGenerator(cpf_loaded, None, device_id_loaded)
+            cert1, cert2 = generator.exchange_certs(codigo)
 
-        return {"mensagem": "Play7Server - Certificado Gerado com sucesso!"}
+            # Salvar certificado na raiz do diretório
+            filename_cert = f"{codigo}.p12"
+            with open(filename_cert, "wb") as file:
+                file.write(cert1.export())
+
+            return {"mensagem": "Play7Server - Certificado Gerado com sucesso!"}
+        else:
+            return {"error": "Código incorreto."}
+
     except Exception as e:
         return {"error": "Erro ao gerar certificado. Verifique os dados e tente novamente."}
 
@@ -103,4 +102,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
