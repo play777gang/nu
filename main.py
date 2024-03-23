@@ -143,6 +143,10 @@ def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
     return {"limitedisponivel": info_card
             }
 
+@app.get("/teste/{cpf}/{senha}/{certificado}")
+def obter_perfilcompleto(cpf: str, senha: str, certificado: str):
+    # Retorna a documentação de ajuda da biblioteca nubank
+    return {"help": help(nubank)}
 
 
 
